@@ -86,7 +86,7 @@ class ContactFormExtras extends Module
             $email = $e->submission->fromEmail;
             $subject = $e->submission->subject;
             $message = $e->submission->message;
-            
+
             // Load the custom email template
             $customEmailTemplate = file_get_contents(__DIR__ . "/template.html");
 
@@ -95,9 +95,22 @@ class ContactFormExtras extends Module
             $customEmailTemplate = str_replace('[[email]]', $email, $customEmailTemplate);
             $customEmailTemplate = str_replace('[[subject]]', $subject, $customEmailTemplate);
             $customEmailTemplate = str_replace('[[message]]', $message, $customEmailTemplate);
-            
+
             // Replace the email HTML body with our custom template
             $e->message->setHtmlBody($customEmailTemplate);
+
+            // Replace the email TEXT body with custom template
+            // strip whitespace and empty lines
+            $customEmailTemplateText = preg_split("/\r\n|\n|\r/", $customEmailTemplate);
+            foreach ($customEmailTemplateText as $customEmailTemplateTextValKey => &$customEmailTemplateTextVal) {
+              if (empty(trim(strip_tags($customEmailTemplateTextVal)))) {
+                unset($customEmailTemplateText[$customEmailTemplateTextValKey]);
+              } else {
+                $customEmailTemplateTextVal = trim(strip_tags($customEmailTemplateTextVal));
+              }
+            }
+            unset($customEmailTemplateTextVal);
+            $e->message->setTextBody(implode("\n", $customEmailTemplateText));
         });
 
         Craft::info(
